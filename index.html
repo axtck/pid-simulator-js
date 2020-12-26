@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <title>pidsim</title>
+</head>
+<body>
+    <div class="jumbotron jumbotron-fluid bg-info text-white">
+        <div class="container">
+            <h1>PID simulator</h1>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-6 text-center">
+                <h4><em>A simulator for PID control</em></h4>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-8 text-center">
+                <canvas id="pid-chart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="./node_modules/chart.js/dist/Chart.min.js"></script>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="./scripts/script.js"></script>
+</body>
+</html>

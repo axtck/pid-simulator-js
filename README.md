@@ -6,8 +6,9 @@
 
 ## TODO
 
-* [ ] get dependencies (chart.js, bootstrap, jQuery...)
-* [ ] get sample data
-* [ ] program control
-* [ ] test values
-* [ ] display in chart
+* [X] get dependencies (chart.js, bootstrap, jQuery...)
+* [X] get sample data
+* [X] program control
+* [X] test values
+* [X] display in chart
+* [ ] clean up code

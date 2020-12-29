@@ -1,6 +1,6 @@
 $(() => {
     const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
-    const calculations = calculate(sensorMeasurements.ys);
+    const calculations = calculate(sensorMeasurements);
 
     drawChart(calculations.nums, calculations);
 
@@ -26,9 +26,9 @@ let d = 0;
 let integral = 0;
 let derivative = 0;
 
-const kp = 0.02;
-const ki = 0.003;
-const kd = 0.029;
+const kp = 0.01;
+const ki = 0.004;
+const kd = 0.005;
 
 let tot_pid = 0;
 
@@ -45,8 +45,7 @@ const max_chartval = max_sval;
 // Get sensor measurements with number of points, min height difference & max height difference.
 function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
     const heightdifference = (min, max) => Math.random() * (max - min) + min;
-    const xs = [];
-    const ys = [];
+    const heights = [];
     let sensorval = inithval;
     for (let i = 0; i < npoints; i++) {
         sensorval += heightdifference(minhdiff, maxhdiff);
@@ -55,14 +54,13 @@ function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
         } else if (sensorval > max_sval) {
             sensorval = max_sval;
         }
-        xs.push(i);
-        ys.push(sensorval);
+        heights.push(sensorval);
     }
-    return { xs, ys };
+    return heights ;
 }
 
 
-function calculate(height) {
+function calculate(heights) {
     const calcs = [];
     const nums = [];
     const heights = [];
@@ -71,8 +69,8 @@ function calculate(height) {
     const is = [];
     const ds = [];
     const tots = [];
-    for (let j = 0; j < height.length; j++) {
-        error = setpoint - height[j];
+    for (let j = 0; j < heights.length; j++) {
+        error = setpoint - heights[j];
 
         p = kp * error;
 
@@ -85,7 +83,7 @@ function calculate(height) {
         tot_pid = p + i + d;
         calcs.push({
             num: j,
-            height: height[j].toFixed(5),
+            height: heights[j].toFixed(5),
             error: error.toFixed(5),
             preverror: preverror.toFixed(5),
             p: p.toFixed(5),
@@ -94,7 +92,7 @@ function calculate(height) {
             totpid: tot_pid.toFixed(5),
         });
         nums.push(j);
-        heights.push(height[j]);
+        heights.push(heights[j]);
         errors.push(error);
         ps.push(p);
         is.push(i);
@@ -116,8 +114,8 @@ function calculate(height) {
 }
 
 function drawChart(xs, data) {
-    var ctx = document.getElementById('heights-chart').getContext('2d');
-    var myChart = new Chart(ctx, {
+    var heightschart = document.getElementById('heights-chart').getContext('2d');
+    var hchart = new Chart(heightschart, {
         type: 'line',
         data: {
             labels: xs,
@@ -139,8 +137,8 @@ function drawChart(xs, data) {
             }
         }
     });
-    var ctx = document.getElementById('pid-chart').getContext('2d');
-    var myChart = new Chart(ctx, {
+    var pidchart = document.getElementById('pid-chart').getContext('2d');
+    var pchart = new Chart(pidchart, {
         type: 'line',
         data: {
             labels: xs,
@@ -157,8 +155,7 @@ function drawChart(xs, data) {
                     ticks: {
                         display: true,
                         beginAtZero: true,
-                        min: -1,
-                        max: 1,
+                        
                     }
                 }]
             }

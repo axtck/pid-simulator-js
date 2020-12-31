@@ -1,12 +1,11 @@
 $(() => {
     const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
     const calculations = calculate(sensorMeasurements);
+    const reformattedCalculations = reformatCalculations(calculations);
 
-    drawChart(calculations.nums, calculations);
+    drawChart(reformattedCalculations);
 
-    console.log(calculations);
-    fillTable(calculations.calculations, $('#tbody-pid'));
-
+    fillTable(calculations, $('#tbody-pid'));
 })
 
 const num_points = 20; // Number of points.
@@ -62,13 +61,6 @@ function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
 
 function calculate(heights) {
     const calcs = [];
-    const nums = [];
-    const heights = [];
-    const errors = [];
-    const ps = [];
-    const is = [];
-    const ds = [];
-    const tots = [];
     for (let j = 0; j < heights.length; j++) {
         error = setpoint - heights[j];
 
@@ -81,6 +73,8 @@ function calculate(heights) {
         d = kd * derivative;
 
         tot_pid = p + i + d;
+
+        // Push values.
         calcs.push({
             num: j,
             height: heights[j].toFixed(5),
@@ -89,36 +83,44 @@ function calculate(heights) {
             p: p.toFixed(5),
             i: i.toFixed(5),
             d: d.toFixed(5),
-            totpid: tot_pid.toFixed(5),
+            total: tot_pid.toFixed(5),
         });
-        nums.push(j);
-        heights.push(heights[j]);
-        errors.push(error);
-        ps.push(p);
-        is.push(i);
-        ds.push(d);
-        tots.push(tot_pid);
 
         preverror = error;
     }
-    return {
-        calculations: calcs,
-        nums: nums,
-        heights: heights,
-        errors: errors,
-        ps: ps,
-        is: is,
-        ds: ds,
-        tots: tots,
-    };
+    return calcs;
 }
 
-function drawChart(xs, data) {
+function reformatCalculations(calculations){
+    const calcFormat = {
+        nums: [],
+        heights: [],
+        errors: [],
+        ps: [],
+        is: [],
+        ds: [],
+        totals: [],
+    }
+
+    for(let calculation of calculations) {
+        calcFormat.nums.push(calculation.num); 
+        calcFormat.heights.push(calculation.height);
+        calcFormat.errors.push(calculation.error);
+        calcFormat.ps.push(calculation.p);
+        calcFormat.is.push(calculation.i);
+        calcFormat.ds.push(calculation.d);
+        calcFormat.totals.push(calculation.total);
+    }
+
+    return calcFormat;
+}
+
+function drawChart(data) {
     var heightschart = document.getElementById('heights-chart').getContext('2d');
     var hchart = new Chart(heightschart, {
         type: 'line',
         data: {
-            labels: xs,
+            labels: data.nums,
             datasets: [
                 drawLine('Height', data.heights, '#19b5fe'),
                 drawLine('Error', data.errors, '#f03434'),
@@ -141,12 +143,12 @@ function drawChart(xs, data) {
     var pchart = new Chart(pidchart, {
         type: 'line',
         data: {
-            labels: xs,
+            labels: data.nums,
             datasets: [
                 drawLine('P', data.ps, '#00e640'),
                 drawLine('I', data.is, '#eeee00'),
                 drawLine('D', data.ds, '#f9690e'),
-                drawLine('total', data.tots, '#9a12b3'),
+                drawLine('total', data.totals, '#9a12b3'),
             ]
         },
         options: {

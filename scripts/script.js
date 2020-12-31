@@ -1,10 +1,27 @@
 $(() => {
+    // Get measurements and calculations.
     const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
     const calculations = calculate(sensorMeasurements);
+
+    // Reformat (for chart values).
     const reformattedCalculations = reformatCalculations(calculations);
 
-    drawChart(reformattedCalculations);
+    // Lines.
+    const heightLine = drawLine('Height', reformattedCalculations.heights, '#19b5fe');
+    const errorLine = drawLine('Error', reformattedCalculations.errors, '#f03434');
+    const pLine = drawLine('P', reformattedCalculations.ps, '#00e640');
+    const iLine = drawLine('I', reformattedCalculations.is, '#eeee00');
+    const dLine = drawLine('D', reformattedCalculations.ds, '#f9690e');
+    const totalLine = drawLine('total', reformattedCalculations.totals, '#9a12b3');
 
+    // Options for heights chart.
+    const heightsOptions = setChartOptions(min_chartval, max_chartval);
+
+    // Draw charts.
+    drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine], heightsOptions);
+    drawChart($('#pid-chart'), reformattedCalculations.nums, [pLine, iLine, dLine, totalLine,]); // With default responsive options.
+
+    // Fill up table.
     fillTable(calculations, $('#tbody-pid'));
 })
 
@@ -55,7 +72,7 @@ function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
         }
         heights.push(sensorval);
     }
-    return heights ;
+    return heights;
 }
 
 
@@ -91,7 +108,7 @@ function calculate(heights) {
     return calcs;
 }
 
-function reformatCalculations(calculations){
+function reformatCalculations(calculations) {
     const calcFormat = {
         nums: [],
         heights: [],
@@ -102,8 +119,8 @@ function reformatCalculations(calculations){
         totals: [],
     }
 
-    for(let calculation of calculations) {
-        calcFormat.nums.push(calculation.num); 
+    for (let calculation of calculations) {
+        calcFormat.nums.push(calculation.num);
         calcFormat.heights.push(calculation.height);
         calcFormat.errors.push(calculation.error);
         calcFormat.ps.push(calculation.p);
@@ -115,53 +132,14 @@ function reformatCalculations(calculations){
     return calcFormat;
 }
 
-function drawChart(data) {
-    var heightschart = document.getElementById('heights-chart').getContext('2d');
-    var hchart = new Chart(heightschart, {
+function drawChart(chartlocation, xs, lines, chartoptions = {}) {
+    const ch = new Chart(chartlocation, {
         type: 'line',
         data: {
-            labels: data.nums,
-            datasets: [
-                drawLine('Height', data.heights, '#19b5fe'),
-                drawLine('Error', data.errors, '#f03434'),
-            ]
+            labels: xs,
+            datasets: lines,
         },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        display: true,
-                        beginAtZero: true,
-                        min: min_chartval,
-                        max: max_chartval,
-                    }
-                }]
-            }
-        }
-    });
-    var pidchart = document.getElementById('pid-chart').getContext('2d');
-    var pchart = new Chart(pidchart, {
-        type: 'line',
-        data: {
-            labels: data.nums,
-            datasets: [
-                drawLine('P', data.ps, '#00e640'),
-                drawLine('I', data.is, '#eeee00'),
-                drawLine('D', data.ds, '#f9690e'),
-                drawLine('total', data.totals, '#9a12b3'),
-            ]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        display: true,
-                        beginAtZero: true,
-                        
-                    }
-                }]
-            }
-        }
+        options: chartoptions,
     });
 }
 
@@ -176,6 +154,20 @@ function drawLine(label, yvals, bordercol) {
     }
 }
 
+function setChartOptions(minval, maxval) {
+    return {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    display: true,
+                    beginAtZero: true,
+                    min: minval,
+                    max: maxval,
+                }
+            }]
+        }
+    }
+}
 
 function fillTable(data, table) {
     const td = (x) => `<td>${x}</td>`;

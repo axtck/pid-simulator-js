@@ -43,7 +43,7 @@ $(() => {
 
 // Constant values.
 const num_points = 31; // Number of points.
-const setpoint = 60; // Wanted value (setpoint).
+const setpoint = 50; // Wanted value (setpoint).
 const init_height = 0; // Initial height.
 const proc_time = 0.6; // Processing time.
 

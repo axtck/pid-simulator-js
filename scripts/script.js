@@ -1,15 +1,10 @@
 $(() => {
     // Get measurements and calculations.
     const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
-    for (let e = 0; e < 20; e++) {
-        sensorMeasurements.push(setpoint);
-    }
     const calculations = calculate(sensorMeasurements);
-    const calculationsSecond = calculate_second(sensorMeasurements);
 
     // Reformat (for chart values).
     const reformattedCalculations = reformatCalculations(calculations);
-    const reformattedCalculationsSecond = reformatCalculations(calculationsSecond);
 
     // Lines.
     const heightLine = drawLine('Height', reformattedCalculations.heights, '#19b5fe');
@@ -20,26 +15,19 @@ $(() => {
     const totalLine = drawLine('total', reformattedCalculations.totals, '#9a12b3');
     const outvalLine = drawLine('out', reformattedCalculations.outvals, '#f03434');
 
-    // Second lines.
-    const pLineSecond = drawLine('P', reformattedCalculationsSecond.ps, '#00e640');
-    const iLineSecond = drawLine('I', reformattedCalculationsSecond.is, '#eeee00');
-    const dLineSecond = drawLine('D', reformattedCalculationsSecond.ds, '#f9690e');
-    const totalLineSecond = drawLine('total', reformattedCalculationsSecond.totals, '#9a12b3');
-
     // Options for heights chart.
     const heightsChartOptions = setChartOptions(min_hchartval, max_hchartval);
 
     // Draw charts.
     drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,], heightsChartOptions);
     drawChart($('#pid-chart'), reformattedCalculations.nums, [pLine, iLine, dLine, totalLine, outvalLine]); // With default responsive options.
-    drawChart($('#pidsecond-chart'), reformattedCalculationsSecond.nums, [pLineSecond, iLineSecond, dLineSecond, totalLineSecond,]); // With default responsive options.
 
     // Fill up table.
     fillTable(calculations, $('#tbody-pid'));
 })
 
 // Number of points.
-const num_points = 20;
+const num_points = 100;
 
 // Sensor.
 const init_sval = 50; // Initial sensorval.
@@ -61,9 +49,9 @@ let integral = 0;
 let derivative = 0;
 
 // Factors.
-const kp = 0.01;
-const ki = 0.004;
-const kd = 0.005;
+const kp = 0.8;
+const ki = 0.02;
+const kd = 0.2;
 
 // Total.
 let tot_pid = 0;
@@ -98,7 +86,6 @@ function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
     return heights;
 }
 
-
 function calculate(heights) {
     const calcs = [];
     for (let j = 0; j < heights.length; j++) {
@@ -106,43 +93,8 @@ function calculate(heights) {
 
         p = kp * error;
 
-        integral = (proc_time * prev_error) + (proc_time * ((error - prev_error) / 2));
-        i = ki * integral;
-
-        derivative = (error - prev_error) / proc_time;
-        d = kd * derivative;
-
-        tot_pid = p + i + d;
-        out_val += tot_pid + nlast;
-
-        // Push values.
-        calcs.push({
-            num: j,
-            height: heights[j].toFixed(5),
-            error: error.toFixed(5),
-            preverror: prev_error.toFixed(5),
-            p: p.toFixed(5),
-            i: i.toFixed(5),
-            d: d.toFixed(5),
-            total: tot_pid.toFixed(5),
-            outval: out_val.toFixed(5),
-        });
-
-        prev_error = error;
-        nlast = i;
-    }
-    return calcs;
-}
-
-function calculate_second(heights) {
-    const calcs = [];
-    for (let j = 0; j < heights.length; j++) {
-        error = setpoint - heights[j];
-
-        p = kp * error;
-
         integral = error * proc_time;
-        i = i + ki * integral;
+        i += ki * integral;
 
         derivative = (error - prev_error) / proc_time;
         d = kd * derivative;
@@ -234,6 +186,6 @@ function fillTable(data, table) {
     const td = (x) => `<td>${x}</td>`;
     const tr = (n, height, error, p, i, d, tot) => `<tr>${td(n) + td(height) + td(error) + td(p) + td(i) + td(d) + td(tot)}</tr>`;
     for (let point of data) {
-        table.append(tr(point.num, point.height, point.error, point.p, point.i, point.d, point.totpid));
+        table.append(tr(point.num, point.height, point.error, point.p, point.i, point.d, point.total));
     }
 }

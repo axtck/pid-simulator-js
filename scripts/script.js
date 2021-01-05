@@ -52,7 +52,7 @@ let derivative = 0;
 
 // Factors.
 const kp = 1;
-const ki = 0.02;
+const ki = 0.08;
 const kd = 0.2;
 
 // Total.
@@ -112,7 +112,7 @@ function calculate() {
             tot_pid = 100;
         }
         if(tot_pid < -100){
-            tot_pid = 100;
+            tot_pid = -100;
         }
 
         // Push values.
@@ -133,39 +133,6 @@ function calculate() {
     }
     return calcs;
 }
-
-/*function calculate(heights) {
-    const calcs = [];
-    for (let j = 0; j < heights.length; j++) {
-        error = setpoint - heights[j];
-
-        p = kp * error;
-
-        integral = error * proc_time;
-        i += ki * integral;
-
-        derivative = (error - prev_error) / proc_time;
-        d = kd * derivative;
-
-        tot_pid = p + i + d;
-
-        // Push values.
-        calcs.push({
-            num: j,
-            height: heights[j].toFixed(5),
-            error: error.toFixed(5),
-            preverror: prev_error.toFixed(5),
-            p: p.toFixed(5),
-            i: i.toFixed(5),
-            d: d.toFixed(5),
-            total: tot_pid.toFixed(5),
-            outval: out_val.toFixed(5),
-        });
-
-        prev_error = error;
-    }
-    return calcs;
-}*/
 
 function reformatCalculations(calculations) {
     const calcFormat = {

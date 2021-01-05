@@ -1,6 +1,6 @@
 # PID simulator
 
-***A PID control simulator in js***
+***A PID control simulator written in js***
 
 ---
 
@@ -11,4 +11,7 @@
 * [X] program control
 * [X] test values
 * [X] display in chart
-* [ ] clean up code
+* [X] clean up code
+* [ ] control using user input values
+* [ ] fix min and max windup (calculate based on input)
+* [ ] fix min and max control value (calculate based on input)

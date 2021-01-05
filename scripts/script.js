@@ -1,165 +1,153 @@
 $(() => {
-    // Get measurements and calculations.
-    const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
-    const calculations = calculate();
+    // Assign initial values.
+    height = init_height; // Height.
 
-    console.log(calculations);
+    pVal = 0; // PID.
+    integral = 0;
+    iVal = 0;
+    derivative = 0;
+    dVal = 0;
+
+    kp = 1; // Factors.
+    ki = 0.5;
+    kd = 0.1;
+
+    error = 0; // Errors.
+    prev_error = 0;
+
+    control_val = 0; // Total control.
+
+    // Get calculations.
+    const calculations = calculate(num_points, setpoint, kp, ki, kd);
+
     // Reformat (for chart values).
     const reformattedCalculations = reformatCalculations(calculations);
 
     // Lines.
+    const setpointLine = drawLine('Setpoint', reformattedCalculations.setpoints, '#f9690e');
     const heightLine = drawLine('Height', reformattedCalculations.heights, '#19b5fe');
     const errorLine = drawLine('Error', reformattedCalculations.errors, '#f03434');
     const pLine = drawLine('P', reformattedCalculations.ps, '#00e640');
     const iLine = drawLine('I', reformattedCalculations.is, '#eeee00');
-    const dLine = drawLine('D', reformattedCalculations.ds, '#f9690e');
-    const totalLine = drawLine('total', reformattedCalculations.totals, '#9a12b3');
-    const outvalLine = drawLine('out', reformattedCalculations.outvals, '#f03434');
-
-    // Options for heights chart.
-    const heightsChartOptions = setChartOptions(min_hchartval, max_hchartval);
+    const dLine = drawLine('D', reformattedCalculations.ds, '#2e3131');
+    const totalLine = drawLine('Total control', reformattedCalculations.totalcontrols, '#9a12b3');
 
     // Draw charts.
-    //drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,], heightsChartOptions);
-    drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,]);
-    drawChart($('#pid-chart'), reformattedCalculations.nums, [pLine, iLine, dLine, totalLine, outvalLine]); // With default responsive options.
+    drawChart($('#control-chart'), reformattedCalculations.nums, [setpointLine, heightLine, pLine, iLine, dLine, totalLine,]);
+    drawChart($('#heights-chart'), reformattedCalculations.nums, [setpointLine, heightLine, errorLine,]);
+    drawChart($('#pid-chart'), reformattedCalculations.nums, [pLine, iLine, dLine, totalLine,]); // With default responsive options.
 
     // Fill up table.
     fillTable(calculations, $('#tbody-pid'));
 })
 
-// Number of points.
-const num_points = 100;
+// Constant values.
+const num_points = 31; // Number of points.
+const setpoint = 60; // Wanted value (setpoint).
+const init_height = 0; // Initial height.
+const proc_time = 0.6; // Processing time.
 
-// Sensor.
-const init_sval = 50; // Initial sensorval.
-const min_sval = 0; // Min and max sensorval.
-const max_sval = 100;
-const min_hdiff = -4; // Min and max height difference for next measurement.
-const max_hdiff = 4;
+// Variables.
 
-// Chart.
-const min_hchartval = -20;
-const max_hchartval = max_sval;
+var height; // Height.
 
-// PID.
-let pVal = 0;
-let iVal = 0;
-let dVal = 0;
+var error; // Errors.
+var prev_error;
 
-let integral = 0;
-let derivative = 0;
+var pVal; // PID.
+var integral;
+var iVal;
+var derivative;
+var dVal;
 
-// Factors.
-const kp = 1;
-const ki = 0.08;
-const kd = 0.2;
+var kp; // Factors.
+var ki;
+var kd;
 
-// Total.
-let tot_pid = 0;
-let out_val = 0;
-let nlast = 0;
+var control_val; // Total control.
 
-// Errors.
-let error = 0;
-let prev_error = 0;
-
-// Processing time.
-const proc_time = 0.6;
-
-// Wanted value (setpoint).
-const setpoint = 60;
-
-
-// Get sensor measurements with number of points, min height difference & max height difference.
-function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
-    const heightdifference = (min, max) => Math.random() * (max - min) + min;
-    const heights = [];
-    let sensorval = inithval;
-    for (let i = 0; i < npoints; i++) {
-        sensorval += heightdifference(minhdiff, maxhdiff);
-        if (sensorval < min_sval) {
-            sensorval = min_sval;
-        } else if (sensorval > max_sval) {
-            sensorval = max_sval;
-        }
-        heights.push(sensorval);
-    }
-    return heights;
-}
-
-function calculate() {
+function calculate(numPs, setP, kpn, kin, kdn) {
     const calcs = [];
-    let height = 20;
+    for (let i = 0; i < numPs; i++) {
+        // Error.
+        error = setP - height;
 
-    for (let j = 0; j < 50; j++) {
-        error = setpoint - height;
+        // P value.
+        pVal = kpn * error;
 
-        pVal = kp * error;
-
-        if (!(iVal < -100) || (iVal > 100)) {
+        // I value (anti-windup).
+        if (!(iVal < -20 && error < 0) || (iVal > 20 && error > 0)) {
             integral = error * proc_time;
-            iVal += ki * integral;
-            console.log('helo')
+            iVal += kin * (error * proc_time);
         }
 
+        // D value.
         derivative = (error - prev_error) / proc_time;
-        dVal = kd * derivative;
+        dVal = kdn * derivative;
 
-        tot_pid = pVal + iVal + dVal;
+        // Control value.
+        control_val = pVal + iVal + dVal;
 
-        if(tot_pid > 100){
-            tot_pid = 100;
-        }
-        if(tot_pid < -100){
-            tot_pid = -100;
+        // Set min and max for control value.
+        if (control_val > 100) {
+            control_val = 100;
+        } else if (control_val < -100) {
+            control_val = -100;
         }
 
         // Push values.
         calcs.push({
-            num: j,
+            setpoint: setP,
+            num: i,
             height: height.toFixed(5),
             error: error.toFixed(5),
             preverror: prev_error.toFixed(5),
             pVal: pVal.toFixed(5),
             iVal: iVal.toFixed(5),
             dVal: dVal.toFixed(5),
-            total: tot_pid.toFixed(5),
-            outval: out_val.toFixed(5),
+            totalcontrol: control_val.toFixed(5),
         });
 
+        // Set previous error.
         prev_error = error;
-        height += tot_pid;
+
+        // Adjust height.
+        height += control_val;
     }
+
     return calcs;
 }
 
+// Function for remormatting calculations.
 function reformatCalculations(calculations) {
+    // Format needed for displaying in chart.
     const calcFormat = {
+        setpoints: [],
         nums: [],
         heights: [],
         errors: [],
         ps: [],
         is: [],
         ds: [],
-        totals: [],
-        outvals: [],
+        totalcontrols: [],
     }
 
+    // Push values in new array.
     for (let calculation of calculations) {
+        calcFormat.setpoints.push(calculation.setpoint)
         calcFormat.nums.push(calculation.num);
         calcFormat.heights.push(calculation.height);
         calcFormat.errors.push(calculation.error);
         calcFormat.ps.push(calculation.pVal);
         calcFormat.is.push(calculation.iVal);
         calcFormat.ds.push(calculation.dVal);
-        calcFormat.totals.push(calculation.total);
-        calcFormat.outvals.push(calculation.outval);
+        calcFormat.totalcontrols.push(calculation.totalcontrol);
     }
 
     return calcFormat;
 }
 
+// Functions for drawing chart.
 function drawChart(chartlocation, xs, lines, chartoptions = {}) {
     const ch = new Chart(chartlocation, {
         type: 'line',
@@ -167,21 +155,24 @@ function drawChart(chartlocation, xs, lines, chartoptions = {}) {
             labels: xs,
             datasets: lines,
         },
+        // Set options if needed.
         options: chartoptions,
     });
 }
 
+// Function to draw line for chart.
 function drawLine(label, yvals, bordercol) {
     return {
-        label: label,
-        data: yvals,
+        label: label, // Set label.
+        data: yvals, // Values for y axis.
         borderColor: [
-            bordercol,
+            bordercol, // Set color.
         ],
         borderWidth: 1
     }
 }
 
+// Function for specifying chart options.
 function setChartOptions(minval, maxval) {
     return {
         scales: {
@@ -189,18 +180,21 @@ function setChartOptions(minval, maxval) {
                 ticks: {
                     display: true,
                     beginAtZero: true,
-                    min: minval,
-                    max: maxval,
+                    min: minval, // Set min value.
+                    max: maxval, // Set max value.
                 }
             }]
         }
     }
 }
 
+// Function for filling table.
 function fillTable(data, table) {
+    // Create td and tr elements.
     const td = (x) => `<td>${x}</td>`;
     const tr = (n, height, error, p, i, d, tot) => `<tr>${td(n) + td(height) + td(error) + td(p) + td(i) + td(d) + td(tot)}</tr>`;
     for (let point of data) {
-        table.append(tr(point.num, point.height, point.error, point.pVal, point.iVal, point.dVal, point.total));
+        // Append to specified table (using jQuery).
+        table.append(tr(point.num, point.height, point.error, point.pVal, point.iVal, point.dVal, point.totalcontrol));
     }
 }

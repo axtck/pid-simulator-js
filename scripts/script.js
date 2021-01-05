@@ -1,8 +1,9 @@
 $(() => {
     // Get measurements and calculations.
     const sensorMeasurements = getSensorMeasurements(num_points, min_hdiff, max_hdiff, init_sval);
-    const calculations = calculate(sensorMeasurements);
+    const calculations = calculate();
 
+    console.log(calculations);
     // Reformat (for chart values).
     const reformattedCalculations = reformatCalculations(calculations);
 
@@ -19,7 +20,8 @@ $(() => {
     const heightsChartOptions = setChartOptions(min_hchartval, max_hchartval);
 
     // Draw charts.
-    drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,], heightsChartOptions);
+    //drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,], heightsChartOptions);
+    drawChart($('#heights-chart'), reformattedCalculations.nums, [heightLine, errorLine,]);
     drawChart($('#pid-chart'), reformattedCalculations.nums, [pLine, iLine, dLine, totalLine, outvalLine]); // With default responsive options.
 
     // Fill up table.
@@ -41,15 +43,15 @@ const min_hchartval = -20;
 const max_hchartval = max_sval;
 
 // PID.
-let p = 0;
-let i = 0;
-let d = 0;
+let pVal = 0;
+let iVal = 0;
+let dVal = 0;
 
 let integral = 0;
 let derivative = 0;
 
 // Factors.
-const kp = 0.8;
+const kp = 1;
 const ki = 0.02;
 const kd = 0.2;
 
@@ -86,7 +88,53 @@ function getSensorMeasurements(npoints, minhdiff, maxhdiff, inithval) {
     return heights;
 }
 
-function calculate(heights) {
+function calculate() {
+    const calcs = [];
+    let height = 20;
+
+    for (let j = 0; j < 50; j++) {
+        error = setpoint - height;
+
+        pVal = kp * error;
+
+        if (!(iVal < -100) || (iVal > 100)) {
+            integral = error * proc_time;
+            iVal += ki * integral;
+            console.log('helo')
+        }
+
+        derivative = (error - prev_error) / proc_time;
+        dVal = kd * derivative;
+
+        tot_pid = pVal + iVal + dVal;
+
+        if(tot_pid > 100){
+            tot_pid = 100;
+        }
+        if(tot_pid < -100){
+            tot_pid = 100;
+        }
+
+        // Push values.
+        calcs.push({
+            num: j,
+            height: height.toFixed(5),
+            error: error.toFixed(5),
+            preverror: prev_error.toFixed(5),
+            pVal: pVal.toFixed(5),
+            iVal: iVal.toFixed(5),
+            dVal: dVal.toFixed(5),
+            total: tot_pid.toFixed(5),
+            outval: out_val.toFixed(5),
+        });
+
+        prev_error = error;
+        height += tot_pid;
+    }
+    return calcs;
+}
+
+/*function calculate(heights) {
     const calcs = [];
     for (let j = 0; j < heights.length; j++) {
         error = setpoint - heights[j];
@@ -117,7 +165,7 @@ function calculate(heights) {
         prev_error = error;
     }
     return calcs;
-}
+}*/
 
 function reformatCalculations(calculations) {
     const calcFormat = {
@@ -135,9 +183,9 @@ function reformatCalculations(calculations) {
         calcFormat.nums.push(calculation.num);
         calcFormat.heights.push(calculation.height);
         calcFormat.errors.push(calculation.error);
-        calcFormat.ps.push(calculation.p);
-        calcFormat.is.push(calculation.i);
-        calcFormat.ds.push(calculation.d);
+        calcFormat.ps.push(calculation.pVal);
+        calcFormat.is.push(calculation.iVal);
+        calcFormat.ds.push(calculation.dVal);
         calcFormat.totals.push(calculation.total);
         calcFormat.outvals.push(calculation.outval);
     }
@@ -186,6 +234,6 @@ function fillTable(data, table) {
     const td = (x) => `<td>${x}</td>`;
     const tr = (n, height, error, p, i, d, tot) => `<tr>${td(n) + td(height) + td(error) + td(p) + td(i) + td(d) + td(tot)}</tr>`;
     for (let point of data) {
-        table.append(tr(point.num, point.height, point.error, point.p, point.i, point.d, point.total));
+        table.append(tr(point.num, point.height, point.error, point.pVal, point.iVal, point.dVal, point.total));
     }
 }

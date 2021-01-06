@@ -99,13 +99,13 @@ function calculate(numPs, setP, kpn, kin, kdn) {
         calcs.push({
             setpoint: setP,
             num: i,
-            height: height.toFixed(5),
-            error: error.toFixed(5),
-            preverror: prev_error.toFixed(5),
-            pVal: pVal.toFixed(5),
-            iVal: iVal.toFixed(5),
-            dVal: dVal.toFixed(5),
-            totalcontrol: control_val.toFixed(5),
+            height: height.toFixed(3),
+            error: error.toFixed(3),
+            preverror: prev_error.toFixed(3),
+            pVal: pVal.toFixed(3),
+            iVal: iVal.toFixed(3),
+            dVal: dVal.toFixed(3),
+            totalcontrol: control_val.toFixed(3),
         });
 
         // Set previous error.

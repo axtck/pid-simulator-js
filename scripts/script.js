@@ -78,7 +78,7 @@ function calculate(numPs, setP, kpn, kin, kdn) {
         // I value (anti-windup).
         if (!(iVal < -20 && error < 0) || (iVal > 20 && error > 0)) {
             integral = error * proc_time;
-            iVal += kin * (error * proc_time);
+            iVal += kin * integral;
         }
 
         // D value.

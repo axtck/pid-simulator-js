@@ -15,3 +15,4 @@
 * [ ] control using user input values
 * [ ] fix min and max windup (calculate based on input)
 * [ ] fix min and max control value (calculate based on input)
+* [ ] fix bugs for values and windup
